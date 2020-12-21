@@ -1,8 +1,12 @@
+mod camera;
+mod models;
 mod programs;
 mod shaders;
 
 use std::ffi::CString;
 
+pub use camera::Camera;
+pub use models::Cube;
 pub use programs::Program;
 pub use shaders::Shader;
 

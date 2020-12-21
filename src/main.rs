@@ -1,118 +1,110 @@
+extern crate cgmath;
 extern crate gl;
 extern crate sdl2;
 
 mod drawing;
+mod entities;
+mod world;
 
-use drawing::{Program, Shader};
+use drawing::{Cube, Program, Shader};
+use world::World;
+
+use cgmath::Rad;
 
 fn main() {
+    let w = 700.0f32;
+    let h = 700.0f32;
     let sdl = sdl2::init().unwrap();
     let video_subsystem = sdl.video().unwrap();
     let window = video_subsystem
-        .window("Game", 900, 700)
+        .window("Game", w as u32, h as u32)
         .opengl()
         .resizable()
         .build()
         .unwrap();
 
+    sdl.mouse().show_cursor(false);
+    sdl.mouse().set_relative_mouse_mode(true);
+
     let _gl_context = window.gl_create_context().unwrap();
 
-    let _gl =
-        gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
+    let gl = gl::Gl::load_with(|s| {
+        video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void
+    });
 
     use std::ffi::CString;
 
-    let vert_shader =
-        Shader::from_vert_source(&CString::new(include_str!("resources/triangle.vert")).unwrap())
-            .unwrap();
+    let vert_shader = Shader::from_vert_source(
+        gl.clone(),
+        &CString::new(include_str!("resources/triangle.vert")).unwrap(),
+    )
+    .unwrap();
 
-    let frag_shader =
-        Shader::from_frag_source(&CString::new(include_str!("resources/triangle.frag")).unwrap())
-            .unwrap();
+    let frag_shader = Shader::from_frag_source(
+        gl.clone(),
+        &CString::new(include_str!("resources/triangle.frag")).unwrap(),
+    )
+    .unwrap();
 
-    let shader_program = Program::new(&[vert_shader, frag_shader]).unwrap();
+    let shader_program = Program::new(gl.clone(), &[vert_shader, frag_shader]).unwrap();
     shader_program.set_used();
 
-    let vao = init_vao();
+    let world = World::new(gl.clone());
 
     unsafe {
-        gl::Viewport(0, 0, 900, 700);
-        gl::ClearColor(0.3, 0.3, 0.5, 1.0);
+        gl.Viewport(0, 0, w as gl::types::GLint, h as gl::types::GLint);
+        gl.ClearColor(0.3, 0.3, 0.5, 1.0);
+        gl.Enable(gl::DEPTH_TEST);
     }
 
+    let mut camera = drawing::Camera::new((0.0, 0.0, 0.0).into(), Rad(0.0), Rad(0.0), w / h);
+
+    let mut keys = std::collections::HashSet::new();
     let mut event_pump = sdl.event_pump().unwrap();
     'main: loop {
         for event in event_pump.poll_iter() {
             match event {
                 sdl2::event::Event::Quit { .. } => break 'main,
+                sdl2::event::Event::KeyDown { keycode, .. } => match keycode {
+                    None => {}
+                    Some(code) => {
+                        keys.insert(code);
+                    }
+                },
+                sdl2::event::Event::KeyUp { keycode, .. } => match keycode {
+                    None => {}
+                    Some(code) => {
+                        keys.remove(&code);
+                    }
+                },
+                sdl2::event::Event::MouseMotion { xrel, yrel, .. } => {
+                    camera.rotate_horisontal(Rad(-xrel as f32 * 2.0 / h));
+                    camera.rotate_vertical(Rad(-yrel as f32 * 2.0 / w));
+                }
                 _ => {}
             }
         }
 
-        unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+        const STEP: f32 = 0.05;
+
+        for key in keys.iter() {
+            match key {
+                sdl2::keyboard::Keycode::W => {
+                    camera.move_forward(STEP);
+                }
+                sdl2::keyboard::Keycode::S => {
+                    camera.move_forward(-STEP);
+                }
+                sdl2::keyboard::Keycode::D => {
+                    camera.move_right(STEP);
+                }
+                sdl2::keyboard::Keycode::A => {
+                    camera.move_right(-STEP);
+                }
+                _ => {}
+            }
         }
-        shader_program.set_used();
-        unsafe {
-            gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
-        }
+        world.draw(&camera, &shader_program);
         window.gl_swap_window();
     }
-}
-
-use gl::types::GLuint;
-
-fn init_vao() -> GLuint {
-    let vertices: Vec<f32> = vec![
-        -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0,
-    ];
-
-    let mut vbo: gl::types::GLuint = 0;
-    unsafe {
-        gl::GenBuffers(1, &mut vbo);
-    }
-
-    unsafe {
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            (vertices.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr,
-            vertices.as_ptr() as *const gl::types::GLvoid,
-            gl::STATIC_DRAW,
-        );
-        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-    }
-
-    let mut vao: gl::types::GLuint = 0;
-    unsafe {
-        gl::GenVertexArrays(1, &mut vao);
-    }
-
-    unsafe {
-        gl::BindVertexArray(vao);
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::EnableVertexAttribArray(0);
-        gl::VertexAttribPointer(
-            0,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            (6 * std::mem::size_of::<f32>()) as gl::types::GLint,
-            std::ptr::null(),
-        );
-        gl::EnableVertexAttribArray(1);
-        gl::VertexAttribPointer(
-            1,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            (6 * std::mem::size_of::<f32>()) as gl::types::GLint,
-            (3 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid,
-        );
-        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-        gl::BindVertexArray(0);
-    }
-
-    vao
 }
