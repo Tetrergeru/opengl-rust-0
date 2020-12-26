@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use super::{drawing::Camera, Cube};
+use super::Cube;
 use cgmath::Matrix4;
 
 pub struct Entity {

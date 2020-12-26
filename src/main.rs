@@ -1,5 +1,6 @@
 extern crate cgmath;
 extern crate gl;
+extern crate image;
 extern crate sdl2;
 
 mod drawing;
@@ -10,6 +11,7 @@ use drawing::{Cube, Program, Shader};
 use world::World;
 
 use cgmath::Rad;
+use sdl2::keyboard::Keycode;
 
 fn main() {
     let w = 700.0f32;
@@ -89,17 +91,23 @@ fn main() {
 
         for key in keys.iter() {
             match key {
-                sdl2::keyboard::Keycode::W => {
+                Keycode::W => {
                     camera.move_forward(STEP);
                 }
-                sdl2::keyboard::Keycode::S => {
+                Keycode::S => {
                     camera.move_forward(-STEP);
                 }
-                sdl2::keyboard::Keycode::D => {
+                Keycode::D => {
                     camera.move_right(STEP);
                 }
-                sdl2::keyboard::Keycode::A => {
+                Keycode::A => {
                     camera.move_right(-STEP);
+                }
+                Keycode::Space => {
+                    camera.move_vec((0.0, STEP, 0.0).into());
+                }
+                Keycode::LShift | Keycode::RShift => {
+                    camera.move_vec((0.0, -STEP, 0.0).into());
                 }
                 _ => {}
             }

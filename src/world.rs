@@ -1,5 +1,5 @@
 use super::{
-    drawing::{Camera, Cube, Program},
+    drawing::{Camera, Cube, Program, Texture},
     entities::Entity,
 };
 use gl::Gl;
@@ -7,8 +7,8 @@ use std::rc::Rc;
 
 pub struct World {
     gl: Gl,
-    models: Vec<Rc<Cube>>,
     entities: Vec<Entity>,
+    texture: Texture,
 }
 
 impl World {
@@ -27,7 +27,7 @@ impl World {
         Self {
             gl: gl.clone(),
             entities,
-            models,
+            texture: Texture::new(gl.clone(), std::path::Path::new("src/resources/grass.png")),
         }
     }
 
@@ -35,11 +35,12 @@ impl World {
         unsafe {
             self.gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
+        self.texture.bind();
         program.set_used();
-
         for entity in self.entities.iter() {
+            self.texture.bind();
             program
-                .set_uniform("camera", &(camera.matrix() * entity.matrix))
+                .set_matrix4("camera", &(camera.matrix() * entity.matrix))
                 .unwrap();
             entity.model.draw(self.gl.clone());
         }

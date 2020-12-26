@@ -1,8 +1,9 @@
 use crate::cgmath::Matrix;
-use gl::types::GLuint;
+use gl::types::{GLint, GLuint};
 use gl::Gl;
+use std::ffi::CString;
 
-use super::{create_whitespace_cstring, shaders::Shader};
+use super::{create_whitespace_cstring, Shader, Texture};
 
 pub struct Program {
     gl: Gl,
@@ -64,7 +65,19 @@ impl Program {
         }
     }
 
-    pub fn set_uniform(&self, name: &str, matrix: &cgmath::Matrix4<f32>) -> Result<(), String> {
+    pub fn set_matrix4(&self, name: &str, matrix: &cgmath::Matrix4<f32>) -> Result<(), String> {
+        let uniform_id = self.get_uniform_location(name)?;
+
+        unsafe {
+            self.gl.UseProgram(self.id);
+            self.gl
+                .UniformMatrix4fv(uniform_id, 1, gl::FALSE, matrix.as_ptr());
+        }
+
+        Ok(())
+    }
+
+    fn get_uniform_location(&self, name: &str) -> Result<GLint, String> {
         let c_name = std::ffi::CString::new(name).unwrap();
         let uniform_id = unsafe {
             self.gl
@@ -75,13 +88,7 @@ impl Program {
             return Err(format!("Could not find uniform {} in program", name));
         }
 
-        unsafe {
-            self.gl.UseProgram(self.id);
-            self.gl
-                .UniformMatrix4fv(uniform_id, 1, gl::FALSE, matrix.as_ptr());
-        }
-
-        Ok(())
+        Ok(uniform_id)
     }
 }
 
