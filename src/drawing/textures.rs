@@ -1,5 +1,4 @@
-use gl::types::{GLint, GLvoid};
-use image::GenericImageView;
+use gl::types::GLint;
 
 use std::{ffi::c_void, path::Path};
 
@@ -50,7 +49,7 @@ impl Texture {
     pub fn bind(&self) {
         unsafe {
             self.gl.BindTexture(gl::TEXTURE_2D, self.id);
-            self.gl.ActiveTexture(gl::TEXTURE0 + self.id);
+            self.gl.ActiveTexture(gl::TEXTURE0);
         }
     }
 }

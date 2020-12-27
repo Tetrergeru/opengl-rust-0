@@ -7,7 +7,7 @@ mod textures;
 use std::ffi::CString;
 
 pub use camera::Camera;
-pub use models::Cube;
+pub use models::Model;
 pub use programs::Program;
 pub use shaders::Shader;
 pub use textures::Texture;

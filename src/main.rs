@@ -7,7 +7,7 @@ mod drawing;
 mod entities;
 mod world;
 
-use drawing::{Cube, Program, Shader};
+use drawing::{Program, Shader};
 use world::World;
 
 use cgmath::Rad;
@@ -51,7 +51,7 @@ fn main() {
     let shader_program = Program::new(gl.clone(), &[vert_shader, frag_shader]).unwrap();
     shader_program.set_used();
 
-    let world = World::new(gl.clone());
+    let mut world = World::new(gl.clone());
 
     unsafe {
         gl.Viewport(0, 0, w as gl::types::GLint, h as gl::types::GLint);
@@ -63,6 +63,8 @@ fn main() {
 
     let mut keys = std::collections::HashSet::new();
     let mut event_pump = sdl.event_pump().unwrap();
+
+    let mut time = std::time::Instant::now();
     'main: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -87,32 +89,34 @@ fn main() {
             }
         }
 
-        const STEP: f32 = 0.05;
-
+        const STEP: f32 = 5.0;
+        let new_time = std::time::Instant::now();
+        let step = (new_time - time).as_secs_f32() * STEP;
+        time = new_time;
         for key in keys.iter() {
             match key {
                 Keycode::W => {
-                    camera.move_forward(STEP);
+                    camera.move_forward(step);
                 }
                 Keycode::S => {
-                    camera.move_forward(-STEP);
+                    camera.move_forward(-step);
                 }
                 Keycode::D => {
-                    camera.move_right(STEP);
+                    camera.move_right(step);
                 }
                 Keycode::A => {
-                    camera.move_right(-STEP);
+                    camera.move_right(-step);
                 }
                 Keycode::Space => {
-                    camera.move_vec((0.0, STEP, 0.0).into());
+                    camera.move_vec((0.0, step, 0.0).into());
                 }
                 Keycode::LShift | Keycode::RShift => {
-                    camera.move_vec((0.0, -STEP, 0.0).into());
+                    camera.move_vec((0.0, -step, 0.0).into());
                 }
                 _ => {}
             }
         }
-        world.draw(&camera, &shader_program);
+        world.tick(&camera, &shader_program);
         window.gl_swap_window();
     }
 }
