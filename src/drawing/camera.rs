@@ -1,8 +1,8 @@
 use cgmath::{Matrix3, Matrix4, One, Point3, Rad, Vector3};
 
 pub struct Camera {
-    origin: Point3<f32>,
-    pub h_angle: Rad<f32>,
+    pub origin: Point3<f32>,
+    h_angle: Rad<f32>,
     v_angle: Rad<f32>,
     aspect: f32,
     matrix: Matrix4<f32>,

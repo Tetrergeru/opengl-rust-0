@@ -1,9 +1,8 @@
-use crate::cgmath::Matrix;
+use crate::cgmath::{Matrix, Point3, Vector3};
 use gl::types::{GLint, GLuint};
 use gl::Gl;
-use std::ffi::CString;
 
-use super::{create_whitespace_cstring, Shader, Texture};
+use super::{create_whitespace_cstring, Shader};
 
 pub struct Program {
     gl: Gl,
@@ -72,6 +71,39 @@ impl Program {
             self.gl.UseProgram(self.id);
             self.gl
                 .UniformMatrix4fv(uniform_id, 1, gl::FALSE, matrix.as_ptr());
+        }
+
+        Ok(())
+    }
+
+    pub fn set_vec3(&self, name: &str, value: Vector3<f32>) -> Result<(), String> {
+        let uniform_id = self.get_uniform_location(name)?;
+
+        unsafe {
+            self.gl.UseProgram(self.id);
+            self.gl.Uniform3f(uniform_id, value.x, value.y, value.z);
+        }
+
+        Ok(())
+    }
+
+    pub fn set_float(&self, name: &str, value: f32) -> Result<(), String> {
+        let uniform_id = self.get_uniform_location(name)?;
+
+        unsafe {
+            self.gl.UseProgram(self.id);
+            self.gl.Uniform1f(uniform_id, value);
+        }
+
+        Ok(())
+    }
+
+    pub fn set_point3(&self, name: &str, value: Point3<f32>) -> Result<(), String> {
+        let uniform_id = self.get_uniform_location(name)?;
+
+        unsafe {
+            self.gl.UseProgram(self.id);
+            self.gl.Uniform3f(uniform_id, value.x, value.y, value.z);
         }
 
         Ok(())

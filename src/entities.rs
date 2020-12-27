@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use super::drawing::{Model, Texture};
-use cgmath::Matrix4;
+use cgmath::{Matrix, Matrix4, SquareMatrix};
 
 pub struct Entity {
     pub model: Rc<Model>,
@@ -16,5 +16,13 @@ impl Entity {
             texture,
             matrix,
         }
+    }
+
+    pub fn matrix(&self) -> Matrix4<f32> {
+        self.matrix
+    }
+
+    pub fn normal_matrix(&self) -> Matrix4<f32> {
+        self.matrix.invert().unwrap().transpose()
     }
 }

@@ -14,7 +14,7 @@ use cgmath::Rad;
 use sdl2::keyboard::Keycode;
 
 fn main() {
-    let w = 700.0f32;
+    let w = 1000.0f32;
     let h = 700.0f32;
     let sdl = sdl2::init().unwrap();
     let video_subsystem = sdl.video().unwrap();
@@ -89,9 +89,10 @@ fn main() {
             }
         }
 
-        const STEP: f32 = 5.0;
+        const STEP: f32 = 15.0;
         let new_time = std::time::Instant::now();
-        let step = (new_time - time).as_secs_f32() * STEP;
+        let delta_time = (new_time - time).as_secs_f32();
+        let step = delta_time * STEP;
         time = new_time;
         for key in keys.iter() {
             match key {
@@ -116,7 +117,7 @@ fn main() {
                 _ => {}
             }
         }
-        world.tick(&camera, &shader_program);
+        world.tick(&camera, &shader_program, delta_time);
         window.gl_swap_window();
     }
 }
