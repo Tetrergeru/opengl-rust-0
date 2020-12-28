@@ -12,6 +12,7 @@ use world::World;
 
 use cgmath::Rad;
 use sdl2::keyboard::Keycode;
+use std::ffi::CString;
 
 fn main() {
     let w = 1000.0f32;
@@ -34,22 +35,22 @@ fn main() {
         video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void
     });
 
-    use std::ffi::CString;
+    // let vert_shader_phong = Shader::from_vert_source(
+    //     gl.clone(),
+    //     &CString::new(include_str!("resources/guro.vert")).unwrap(),
+    // )
+    // .unwrap();
 
-    let vert_shader = Shader::from_vert_source(
-        gl.clone(),
-        &CString::new(include_str!("resources/triangle.vert")).unwrap(),
-    )
-    .unwrap();
+    // let frag_shader = Shader::from_frag_source(
+    //     gl.clone(),
+    //     &CString::new(include_str!("resources/guro.frag")).unwrap(),
+    // )
+    // .unwrap();
 
-    let frag_shader = Shader::from_frag_source(
-        gl.clone(),
-        &CString::new(include_str!("resources/triangle.frag")).unwrap(),
-    )
-    .unwrap();
-
-    let shader_program = Program::new(gl.clone(), &[vert_shader, frag_shader]).unwrap();
-    shader_program.set_used();
+    let programs = [load_program(gl.clone(), "guro"), load_program(gl.clone(), "phong")];
+    let mut current_program = 0;
+    //Program::new(gl.clone(), &[vert_shader_phong, frag_shader]).unwrap();
+    //shader_program.set_used();
 
     let mut world = World::new(gl.clone());
 
@@ -71,9 +72,24 @@ fn main() {
                 sdl2::event::Event::Quit { .. } => break 'main,
                 sdl2::event::Event::KeyDown { keycode, .. } => match keycode {
                     None => {}
-                    Some(code) => {
-                        keys.insert(code);
-                    }
+                    Some(code) => match code {
+                        Keycode::F3 => {
+                            world.turn_sun();
+                        }
+                        Keycode::F4 => {
+                            world.turn_projector();
+                        }
+                        Keycode::F5 => {
+                            current_program = match current_program {
+                                0 => 1,
+                                1 => 0,
+                                _ => 0,
+                            };
+                        }
+                        _ => {
+                            keys.insert(code);
+                        }
+                    },
                 },
                 sdl2::event::Event::KeyUp { keycode, .. } => match keycode {
                     None => {}
@@ -108,6 +124,18 @@ fn main() {
                 Keycode::A => {
                     camera.move_right(-step);
                 }
+                Keycode::F1 => {
+                    world.color_coeff += 0.1;
+                    if world.color_coeff > 1.0 {
+                        world.color_coeff = 1.0;
+                    }
+                }
+                Keycode::F2 => {
+                    world.color_coeff -= 0.1;
+                    if world.color_coeff < 0.0 {
+                        world.color_coeff = 0.0;
+                    }
+                }
                 Keycode::Space => {
                     camera.move_vec((0.0, step, 0.0).into());
                 }
@@ -117,7 +145,23 @@ fn main() {
                 _ => {}
             }
         }
-        world.tick(&camera, &shader_program, delta_time);
+        world.tick(&camera, &programs[current_program], delta_time);
         window.gl_swap_window();
     }
+}
+
+fn load_program(gl: gl::Gl, name: &str) -> Program {
+    let vert_shader_phong = Shader::from_vert_source(
+        gl.clone(),
+        &CString::new(std::fs::read_to_string(format!("src/resources/{}.vert", name)).unwrap()).unwrap(),
+    )
+    .unwrap();
+
+    let frag_shader = Shader::from_frag_source(
+        gl.clone(),
+        &CString::new(std::fs::read_to_string(format!("src/resources/{}.frag", name)).unwrap()).unwrap(),
+    )
+    .unwrap();
+
+    Program::new(gl.clone(), &[vert_shader_phong, frag_shader]).unwrap()
 }

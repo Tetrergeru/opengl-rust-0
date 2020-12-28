@@ -109,6 +109,17 @@ impl Program {
         Ok(())
     }
 
+    pub fn set_int(&self, name: &str, value: i32) -> Result<(), String> {
+        let uniform_id = self.get_uniform_location(name)?;
+
+        unsafe {
+            self.gl.UseProgram(self.id);
+            self.gl.Uniform1i(uniform_id, value);
+        }
+
+        Ok(())
+    }
+
     fn get_uniform_location(&self, name: &str) -> Result<GLint, String> {
         let c_name = std::ffi::CString::new(name).unwrap();
         let uniform_id = unsafe {

@@ -57,6 +57,10 @@ impl Camera {
         self.recalculate_matrix();
     }
 
+    pub fn get_forvard(&self) -> Vector3<f32>{
+        Matrix3::<f32>::from_angle_y(self.h_angle) * Matrix3::<f32>::from_angle_z(self.v_angle) * Vector3::unit_x()
+    }
+
     pub fn move_right(&mut self, distance: f32) {
         self.origin += Matrix3::<f32>::from_angle_y(self.h_angle) * (Vector3::unit_z() * distance);
         self.recalculate_matrix();
