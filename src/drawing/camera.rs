@@ -57,6 +57,7 @@ impl Camera {
         self.recalculate_matrix();
     }
 
+    #[allow(dead_code)]
     pub fn get_forvard(&self) -> Vector3<f32>{
         Matrix3::<f32>::from_angle_y(self.h_angle) * Matrix3::<f32>::from_angle_z(self.v_angle) * Vector3::unit_x()
     }

@@ -10,8 +10,10 @@ in VS_OUTPUT {
 out vec4 Color;
 
 uniform sampler2D Texture;
+uniform sampler2D Texture_2;
 
 uniform float color_coeff;
+uniform float texture_coeff;
 
 struct LightData {
     int mode; // 0 - off, 1 - point, 2 - projector
@@ -72,5 +74,5 @@ float calculate_brightness() {
 
 void main() {
     float brightness = calculate_brightness();
-    Color = (vec4(IN.Color, 1.0f) * color_coeff + texture(Texture, IN.TextureCoords) * (1.0 - color_coeff)) * brightness;
+    Color = mix(vec4(IN.Color, 1.0f), mix(texture(Texture, IN.TextureCoords), texture(Texture_2, IN.TextureCoords), texture_coeff) * brightness, color_coeff);
 }

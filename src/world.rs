@@ -13,6 +13,7 @@ pub struct World {
     lights: Vec<Light>,
     time: f32,
     pub color_coeff: f32,
+    pub texture_coeff: f32,
 }
 
 impl World {
@@ -25,6 +26,10 @@ impl World {
             ),
             Rc::new(
                 Model::from_obj(gl.clone(), std::path::Path::new("src/resources/torch.obj"))
+                    .unwrap(),
+            ),
+            Rc::new(
+                Model::from_obj(gl.clone(), std::path::Path::new("src/resources/cat.obj"))
                     .unwrap(),
             ),
         ];
@@ -44,6 +49,14 @@ impl World {
             Rc::new(Texture::new(
                 gl.clone(),
                 std::path::Path::new("src/resources/torch.png"),
+            )),
+            Rc::new(Texture::new(
+                gl.clone(),
+                std::path::Path::new("src/resources/aaa.png"),
+            )),
+            Rc::new(Texture::new(
+                gl.clone(),
+                std::path::Path::new("src/resources/cat.jpg"),
             )),
         ];
         // 0 - skull sun
@@ -96,6 +109,15 @@ impl World {
                 }
             }
         }
+        // Cat
+        entities.push(Entity::new(
+            models[3].clone(),
+            textures[5].clone(),
+            Matrix4::from_translation((10.0, -95.0, 10.0).into())
+                * Matrix4::from_scale(3.0)
+                * Matrix4::from_angle_x(Rad(std::f32::consts::PI / -2.0))
+                * Matrix4::from_angle_z(Rad(std::f32::consts::PI / 4.0)),
+        ));
         println!();
         Self {
             gl: gl.clone(),
@@ -104,6 +126,7 @@ impl World {
             lights,
             time: 0.0,
             color_coeff: 0.0,
+            texture_coeff: 1.0,
         }
     }
 
@@ -115,6 +138,9 @@ impl World {
         program.set_used();
         let mut current_texture = self.textures[0].id;
         self.textures[0].bind();
+        self.textures[4].bind_n(1);
+
+
         self.entities[0].matrix = Matrix4::from_translation(self.skull())
             * Matrix4::from_scale(0.13)
             * Matrix4::from_angle_x(Rad(std::f32::consts::PI / -2.0));
@@ -127,10 +153,14 @@ impl World {
         }
         program.set_matrix4("camera", &camera.matrix()).unwrap();
         program.set_float("color_coeff", self.color_coeff).unwrap();
+        program.set_float("texture_coeff", self.texture_coeff).unwrap();
+        program.set_int("Texture", 0).unwrap();
+        program.set_int("Texture_2", 1).unwrap();
 
         for entity in self.entities.iter() {
             if entity.texture.id != current_texture {
                 entity.texture.bind();
+                self.textures[4].bind_n(1);
                 current_texture = entity.texture.id;
             }
             program.set_matrix4("transform", &entity.matrix()).unwrap();

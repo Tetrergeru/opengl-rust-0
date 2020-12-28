@@ -52,4 +52,11 @@ impl Texture {
             self.gl.ActiveTexture(gl::TEXTURE0);
         }
     }
+
+    pub fn bind_n(&self, n: u32) {
+        unsafe {
+            self.gl.BindTexture(gl::TEXTURE_2D, self.id);
+            self.gl.ActiveTexture(gl::TEXTURE0 + n);
+        }
+    }
 }

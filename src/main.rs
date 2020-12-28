@@ -73,13 +73,37 @@ fn main() {
                 sdl2::event::Event::KeyDown { keycode, .. } => match keycode {
                     None => {}
                     Some(code) => match code {
+                        Keycode::F1 => {
+                            world.color_coeff += 0.1;
+                            if world.color_coeff > 1.0 {
+                                world.color_coeff = 1.0;
+                            }
+                        }
+                        Keycode::F2 => {
+                            world.color_coeff -= 0.1;
+                            if world.color_coeff < 0.0 {
+                                world.color_coeff = 0.0;
+                            }
+                        }
                         Keycode::F3 => {
-                            world.turn_sun();
+                            world.texture_coeff += 0.1;
+                            if world.texture_coeff > 1.0 {
+                                world.texture_coeff = 1.0;
+                            }
                         }
                         Keycode::F4 => {
-                            world.turn_projector();
+                            world.texture_coeff -= 0.1;
+                            if world.texture_coeff < 0.0 {
+                                world.texture_coeff = 0.0;
+                            }
                         }
                         Keycode::F5 => {
+                            world.turn_sun();
+                        }
+                        Keycode::F6 => {
+                            world.turn_projector();
+                        }
+                        Keycode::F7 => {
                             current_program = match current_program {
                                 0 => 1,
                                 1 => 0,
@@ -123,18 +147,6 @@ fn main() {
                 }
                 Keycode::A => {
                     camera.move_right(-step);
-                }
-                Keycode::F1 => {
-                    world.color_coeff += 0.1;
-                    if world.color_coeff > 1.0 {
-                        world.color_coeff = 1.0;
-                    }
-                }
-                Keycode::F2 => {
-                    world.color_coeff -= 0.1;
-                    if world.color_coeff < 0.0 {
-                        world.color_coeff = 0.0;
-                    }
                 }
                 Keycode::Space => {
                     camera.move_vec((0.0, step, 0.0).into());
